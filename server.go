@@ -6,11 +6,10 @@ import (
 	"encoding/json"
 
 	"fmt"
-	"io/ioutil"
 
 	"net/http"
 
-	"github.com/dimfeld/httptreemux"
+	"github.com/gorilla/mux"
 )
 
 type resStr struct {
@@ -39,54 +38,18 @@ func Error(w http.ResponseWriter, err int, msg string) {
 	json.NewEncoder(w).Encode(e)
 }
 
-func notAllowed(w http.ResponseWriter, r *http.Request, methods map[string]httptreemux.HandlerFunc) {
-	fmt.Println("Incorrect resource request (method): ", r.Method, " ", r.RequestURI, " from ", r.RemoteAddr)
-	Error(w, 405, "Method Not Allowed")
-}
-
-func notFound(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Incorrect resource request: ", r.Method, " ", r.RequestURI, " from ", r.RemoteAddr)
-	Error(w, 404, "API Not Found")
-}
-func getdomain(w http.ResponseWriter, r *http.Request, ps map[string]string) {
-	id := ps["domain"]
-	urlStr := "http://10.137.0.6/local/gti/" + id + "/rate"
-	fmt.Println("URL IS : ", urlStr)
-
-	resp, err := http.Get(urlStr)
-	if err != nil {
-		fmt.Println("Error : ", err)
-		return
-	}
-	defer resp.Body.Close()
-	content, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		fmt.Println("Error : ", err)
-		return
-	}
-	fmt.Println("content : ", string(content))
-	res := new(resStr)
-	if err = json.Unmarshal(content, &res); err != nil {
-		fmt.Println("Error :", err)
-		return
-	}
-
-	fmt.Printf("Response is %+v: ", res.Categories, res.Reputation)
-	json.NewEncoder(w).Encode(res)
-	return
+func home(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("inside Rent")
 
 }
 
 func Serve() bool {
 
-	router := httptreemux.New()
-	router.MethodNotAllowedHandler = notAllowed
-	router.NotFoundHandler = notFound
+	router := mux.NewRouter()
 
 	//Mock-gti
 	//router.Handle("POST", "/gti", post)
-	router.Handle("GET", "/local/gti/:domain/rate", getdomain)
+	router.HandleFunc("/home", home)
 
 	// Default server - non-trusted for debugging
 	serverhttp := func() {
